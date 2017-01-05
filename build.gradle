@@ -15,7 +15,12 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+
+        flatDir {
+            dirs 'libs' //this way we can find the .aar file in libs folder
+        }
     }
+
 }
 
 task clean(type: Delete) {
