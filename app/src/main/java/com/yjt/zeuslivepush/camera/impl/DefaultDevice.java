@@ -49,7 +49,7 @@ public final class DefaultDevice extends CameraDevice {
         this.mCameraHandler = new Handler(this._CameraThread.getLooper(), new DefaultDevice.CameraThreadCallback());
         this._Callback = callback;
         this._CallbackHandler = callback_handler;
-        this.mCameraHandler.obtainMessage(1).sendToTarget();
+        this.mCameraHandler.obtainMessage(WHAT_DEVICE_OPEN).sendToTarget();
     }
 
     void doOpen() {
@@ -127,7 +127,7 @@ public final class DefaultDevice extends CameraDevice {
             this.mCameraCaptureSession = null;
         }
 
-        this.mCameraHandler.obtainMessage(2).sendToTarget();
+        this.mCameraHandler.obtainMessage(WHAT_DEVICE_CLOSE).sendToTarget();
         HandlerUtil.quitSafely(this.mCameraHandler);
         ThreadUtil.join(this._CameraThread);
     }

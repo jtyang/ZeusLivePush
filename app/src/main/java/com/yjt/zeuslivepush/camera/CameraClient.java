@@ -35,14 +35,16 @@ public class CameraClient {
     public static final int MODE_BUFFER = 4;
     public static final int ZOOM_SCALE = 100;
 
+    private final int Status_None = 0;
+    private final int Status_OnPreview = 1;
+
     private CameraCaptureSession _CameraCaptureSession;
     private final DefaultManager _CameraManager;
     private CameraClient.CameraLoader _Loader;
 
     private int mMode;
     private Renderer mRendererCallback;
-    private final int Status_None;
-    private final int Status_OnPreview;
+
     private int mStatus;
     private ArrayList<CaptureRequest> mCaptureRequestList;
     private ArrayList<QpEgl11Surface> mOutputSurfaces;
@@ -79,11 +81,10 @@ public class CameraClient {
     }
 
     private CameraClient(PermissionChecker permission) {
-        this.mMode = 2;
+        this.mMode = MODE_GLSURFACE;
         this.mRendererCallback = null;
-        this.Status_None = 0;
-        this.Status_OnPreview = 1;
-        this.mStatus = 0;
+
+        this.mStatus = Status_None;
         this.mCaptureRequestList = new ArrayList();
         this.mOutputSurfaces = new ArrayList();
         this.mReleasableBufferCount = 10;
@@ -284,14 +285,14 @@ public class CameraClient {
             this._ContentWidth = w;
             this._ContentHeight = h;
             if (this._CameraDevice != null) {
-                if ((this.mMode & 4) != 0) {
+                if ((this.mMode & MODE_BUFFER) != 0) {
                     this.destroyCaptureSessionChecked();
                     if (this.configurePreviewSize(this._Chara)) {
                         this.createCaptureSessionIfPossible();
                     }
                 } else {
                     this.fillConfiguration(this._Config);
-                    CaptureRequest req = new CaptureRequest(16, this._PreviewDisplayCrop, (CaptureRequest.OnCaptureRequestResultListener) null);
+                    CaptureRequest req = new CaptureRequest(CaptureRequest.REQUESTKEY_CROP, this._PreviewDisplayCrop, (CaptureRequest.OnCaptureRequestResultListener) null);
                     if (this._CameraCaptureSession != null) {
                         this._CameraCaptureSession.setCaptureRequest(req);
                     } else {
@@ -323,7 +324,7 @@ public class CameraClient {
     }
 
     private boolean configurePreviewSize(CameraCharacteristics chara) {
-        if ((this.mMode & 4) != 0) {
+        if ((this.mMode & MODE_BUFFER) != 0) {
             boolean preview_size = QuirksStorage.getBoolean(Quirk.CAMERA_ASPECT_RATIO_DEDUCTION);
             Size preview_size1 = (new PreviewSizeChooser(preview_size)).choose(chara, this._ContentWidth, this._ContentHeight, this._Config.displayOrientation);
             if (preview_size1 == null) {
@@ -359,7 +360,7 @@ public class CameraClient {
         int id = device.getID();
         device.close();
         this._SessionLoader = null;
-        this.mStatus = 0;
+        this.mStatus = Status_None;
         if (this._OnErrorListener != null) {
             this._OnErrorListener.onError(this, id);
         }
@@ -368,7 +369,7 @@ public class CameraClient {
     private void onIllegalOutputResolution(CameraDevice device, int supportWidth, int supportedHeight) {
         device.close();
         this._SessionLoader = null;
-        this.mStatus = 0;
+        this.mStatus = Status_None;
         if (this._OnErrorListener != null) {
             this._OnErrorListener.onIllegalOutputResolution(supportWidth, supportedHeight);
         }
@@ -384,7 +385,7 @@ public class CameraClient {
         if (this._CameraCaptureSession == null && this._SessionLoader == null) {
             if (this._CameraDevice != null) {
                 ArrayList output_list = new ArrayList();
-                if ((this.mMode & 1) != 0) {
+                if ((this.mMode & MODE_SURFACE) != 0) {
                     if (this.mHolder == null) {
                         return;
                     }
@@ -392,7 +393,7 @@ public class CameraClient {
                     output_list.add(this.mHolder);
                 }
 
-                if ((this.mMode & 4) != 0) {
+                if ((this.mMode & MODE_BUFFER) != 0) {
                     Rect temp2 = new Rect((int) this._PreviewDataCrop.left, (int) this._PreviewDataCrop.top, (int) this._PreviewDataCrop.right, (int) this._PreviewDataCrop.bottom);
                     this._PreviewSource = new PreviewSource9(this._Config.previewWidth, this._Config.previewHeight, temp2, this._DisplayMatrix, this.mReleasableBufferCount);
                     output_list.add(this._PreviewSource);
@@ -457,7 +458,7 @@ public class CameraClient {
         }
 
         float scale_factor;
-        if ((this.mMode & 4) != 0) {
+        if ((this.mMode & MODE_BUFFER) != 0) {
             Assert.assertTrue(Boolean.valueOf(width >= this._ContentWidth && height >= this._ContentHeight));
             this._PreviewDisplayCrop.set(0, 0, this._ContentWidth, this._ContentHeight);
             scale_factor = 1.0F;
@@ -495,7 +496,7 @@ public class CameraClient {
 
     public void setFocusMode(String focusMode, CaptureRequest.OnCaptureRequestResultListener l) {
         if (this._CameraCaptureSession != null) {
-            CaptureRequest req = new CaptureRequest(32, focusMode, l);
+            CaptureRequest req = new CaptureRequest(CaptureRequest.REQUESTKEY_FOCUSMODE, focusMode, l);
             this._CameraCaptureSession.setCaptureRequest(req);
         }
 
@@ -588,7 +589,7 @@ public class CameraClient {
     }
 
     private void setCameraID(int id) {
-        if (this.mStatus != 1 || this.getCameraID() != id) {
+        if (this.mStatus != Status_OnPreview || this.getCameraID() != id) {
             Log.i("CameraClient", "setCameraID destroyCaptureSessionChecked");
             this.destroyCaptureSessionChecked();
             if (this._Loader != null) {
@@ -604,9 +605,9 @@ public class CameraClient {
 
             this._PreviewSource = null;
             if (id < 0) {
-                this.mStatus = 0;
+                this.mStatus = Status_None;
             } else {
-                this.mStatus = 1;
+                this.mStatus = Status_OnPreview;
                 this._Loader = new CameraClient.CameraLoader(id);
                 this._CameraManager.openCamera(id, this._Loader);
             }
@@ -631,17 +632,17 @@ public class CameraClient {
 
     public void takePicture(String url, CaptureRequest.OnCaptureRequestResultListener l) {
         if (this._CameraCaptureSession != null) {
-            CaptureRequest req = new CaptureRequest(8, url, l);
+            CaptureRequest req = new CaptureRequest(CaptureRequest.REQUESTKEY_TAKEPICTURE, url, l);
             this._CameraCaptureSession.setCaptureRequest(req);
         }
 
     }
 
     public void setFlashMode(String flash_mode, CaptureRequest.OnCaptureRequestResultListener l) {
-        CaptureRequest req = new CaptureRequest(1, flash_mode, l);
+        CaptureRequest req = new CaptureRequest(CaptureRequest.REQUESTKEY_FLASHMODE, flash_mode, l);
         if (this._CameraCaptureSession != null) {
             this._CameraCaptureSession.setCaptureRequest(req);
-        } else if (this.mStatus == 1) {
+        } else if (this.mStatus == Status_OnPreview) {
             this.mCaptureRequestList.add(req);
         }
 
@@ -654,7 +655,7 @@ public class CameraClient {
                 List flashModes = parameters.getSupportedFlashModes();
                 String flashMode = parameters.getFlashMode();
                 if (flashModes != null) {
-                    if ("off".equals(flashMode)) {
+                    if (Camera.Parameters.FLASH_MODE_OFF.equals(flashMode)) {
                         this.turnLightOn(flashMode, flashModes, parameters);
                     } else {
                         this.turnLightOff(flashMode, flashModes, parameters);
@@ -675,23 +676,23 @@ public class CameraClient {
             } else {
                 List flashModes = parameters.getSupportedFlashModes();
                 String flashMode = parameters.getFlashMode();
-                return flashModes == null ? false : "off".equals(flashMode);
+                return flashModes == null ? false : Camera.Parameters.FLASH_MODE_OFF.equals(flashMode);
             }
         }
     }
 
     public void turnLightOn(String flashMode, List<String> flashModes, Camera.Parameters parameters) {
-        if (!"torch".equals(flashMode) && flashModes.contains("torch")) {
-            parameters.setFlashMode("torch");
+        if (!Camera.Parameters.FLASH_MODE_TORCH.equals(flashMode) && flashModes.contains(Camera.Parameters.FLASH_MODE_TORCH)) {
+            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
             this._CameraCaptureSession._Camera.setParameters(parameters);
         }
 
     }
 
     public void turnLightOff(String flashMode, List<String> flashModes, Camera.Parameters parameters) {
-        if (!"off".equals(flashMode)) {
-            if (flashModes.contains("off")) {
-                parameters.setFlashMode("off");
+        if (!Camera.Parameters.FLASH_MODE_OFF.equals(flashMode)) {
+            if (flashModes.contains(Camera.Parameters.FLASH_MODE_OFF)) {
+                parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
                 this._CameraCaptureSession._Camera.setParameters(parameters);
             } else {
                 Log.e("CameraClient", "FLASH_MODE_OFF not supported");
