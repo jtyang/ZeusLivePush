@@ -3,6 +3,7 @@ package com.yjt.zeuslivepush.camera.impl;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.yjt.zeuslivepush.camera.CameraDevice;
 import com.yjt.zeuslivepush.camera.permission.PermissionChecker;
@@ -72,6 +73,7 @@ public final class DefaultManager {
 
         try {
             this._Instance = Camera.open(id);
+            Log.e("DefaultManager", "camera open id:" + id);
         } finally {
             if (this._Permission != null) {
                 this._Permission.stopPrivilegedOperation(token);

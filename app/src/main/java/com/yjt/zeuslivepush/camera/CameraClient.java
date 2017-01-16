@@ -336,7 +336,7 @@ public class CameraClient {
             this._Config.previewHeight = preview_size1.height;
         } else {
             for (int var4 = 0; var4 < this._Chara.getPreviewSizeList().length; ++var4) {
-                Log.d("preview_size", "" + this._Chara.getPreviewSizeList()[var4]);
+                Log.d("CameraClient", "configurePreviewSize:" + this._Chara.getPreviewSizeList()[var4]);
             }
 
             Size var5 = (new PreviewSizeChooser(false)).choose(chara, this._ContentWidth, this._ContentHeight, this._Config.displayOrientation);
@@ -350,7 +350,7 @@ public class CameraClient {
 
             this._Config.previewWidth = var5.width;
             this._Config.previewHeight = var5.height;
-            Log.d("preview_size", "_Config.previewWidth" + this._Config.previewWidth + "_Config.previewHeight" + this._Config.previewHeight);
+            Log.d("CameraClient", "configurePreviewSize _Config.previewWidth=" + this._Config.previewWidth + "_Config.previewHeight=" + this._Config.previewHeight);
         }
 
         return true;
@@ -590,7 +590,7 @@ public class CameraClient {
 
     private void setCameraID(int id) {
         if (this.mStatus != Status_OnPreview || this.getCameraID() != id) {
-            Log.i("CameraClient", "setCameraID destroyCaptureSessionChecked");
+            Log.i("CameraClient", "setCameraID destroyCaptureSessionChecked cameraId=" + id);
             this.destroyCaptureSessionChecked();
             if (this._Loader != null) {
                 this._Loader.cancel();

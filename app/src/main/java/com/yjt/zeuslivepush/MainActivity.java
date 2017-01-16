@@ -2,12 +2,15 @@ package com.yjt.zeuslivepush;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.TextView;
 
 import com.yjt.zeuslivepush.live.ZeusLiveManager;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,13 +28,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Example of a call to a native method
-        TextView tv = (TextView) findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI());
-
-
         zeusLiveManager = new ZeusLiveManager();
         zeusLiveManager.init(this);
+
 
         String pushUrl = "rtmp://";
         zeusLiveManager.startRecord(pushUrl);
@@ -40,8 +39,12 @@ public class MainActivity extends AppCompatActivity {
         _CameraSurface.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
+                Log.e("camera","surfacwcreated");
                 holder.setKeepScreenOn(true);
                 mPreviewSurface = holder.getSurface();
+
+                Map<String, Object> mConfigure = new HashMap<>();
+                zeusLiveManager.prepare(mConfigure, mPreviewSurface);
             }
 
             @Override

@@ -461,7 +461,7 @@ public final class DefaultCaptureSession extends CameraCaptureSession implements
         }
 
         protected void handleMessage(DefaultCaptureSession reference, Message msg) {
-            Log.d("Zoom", "receive message, msg.what =" + msg.what);
+            Log.d("CameraCapture", "CameraThreadHandler receive message, msg.what =" + msg.what);
             QpEgl11Surface surface = null;
             switch (msg.what) {
                 case 1:

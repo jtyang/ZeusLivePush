@@ -54,8 +54,8 @@ public class ZeusLiveManager {
 
                 try {
                     this.mSurfaceController = this.mCameraClient.addSurface(previewSurface);
-                } catch (Exception var9) {
-                    ;
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
                 if (this.mPreviewResolution.size() > 0) {
