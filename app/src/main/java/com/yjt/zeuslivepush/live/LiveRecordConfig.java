@@ -133,7 +133,7 @@ public class LiveRecordConfig {
             LiveRecordConfig config = (new LiveRecordConfig.Builder(surfaceRotation))
                     .screenAspectRatio(screenAspectRatio)
                     .audioBitrate(((Integer) MapUtil.parseMapValue(params, "audio-bitrate", Integer.valueOf(32000))).intValue())
-                    .audioSampleRate(((Integer) MapUtil.parseMapValue(params, "sample-rate", Integer.valueOf('걄'))).intValue())
+                    .audioSampleRate(((Integer) MapUtil.parseMapValue(params, "sample-rate", Integer.valueOf(44100))).intValue())
                     .cameraInitialFacing(((Integer) MapUtil.parseMapValue(params, "camera-facing", Integer.valueOf(0))).intValue())
                     .frameRate(((Integer) MapUtil.parseMapValue(params, "frame-rate", Integer.valueOf(20))).intValue())
                     .iFrameInternal(((Integer) MapUtil.parseMapValue(params, "i-frame-internal", Integer.valueOf(2))).intValue())
